@@ -1,0 +1,11 @@
+Material ParticleMat1 : Common/MatDefs/Misc/Particle.j3md {
+     MaterialParameters {
+        Texture : Textures/Particles/Whitepuff/whitePuff08.png
+        PointSprite : true
+
+     }
+    AdditionalRenderState {
+      Blend Additive
+      PointSprite On
+    }
+}
