@@ -19,6 +19,7 @@ import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
 import com.jme3.post.filters.BloomFilter;
+import com.jme3.post.filters.DepthOfFieldFilter;
 import com.jme3.post.filters.LightScatteringFilter;
 import com.jme3.post.ssao.SSAOFilter;
 import com.jme3.renderer.RenderManager;
@@ -157,11 +158,19 @@ public class Main extends SimpleApplication {
         
         water.setWaterHeight(-4.0f);
         water.setUseFoam(true);
-        water.setFoamTexture((Texture2D)assetManager.loadTexture("Common/MatDefs/Water/Textures/foam.jpg"));
+        water.setFoamTexture((Texture2D)assetManager.loadTexture("Textures/foam.jpg"));
          
         fpp.addFilter(water);
 
         viewPort.addProcessor(fpp);
+        
+        
+        
+         //Depth of field Filter
+        DepthOfFieldFilter dof = new DepthOfFieldFilter();
+        dof.setFocusDistance(0);
+        dof.setFocusRange(100);
+        fpp.addFilter(dof);
 
     }
 
