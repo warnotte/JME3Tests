@@ -1,0 +1,21 @@
+Material Floor1 : Common/MatDefs/Light/Lighting.j3md {
+    MaterialParameters {
+        DiffuseMap : Repeat Textures/2x2_10_ns_tiles_diffuse.jpg
+        SpecularMap : Repeat Textures/2x2_10_ns_tiles_diffuse.jpg
+        NormalMap : Repeat Textures/2x2_10_ns_tiles_bump_NORM.png
+        VertexLighting : false
+        UseMaterialColors : false
+        UseVertexColor : false
+    }
+    AdditionalRenderState {
+      PointSprite On
+      FaceCull Back
+      AlphaTestFalloff 0.0
+      DepthWrite On
+      ColorWrite On
+      PolyOffset 0.0 0.0
+      DepthTest On
+      Blend Off
+      Wireframe Off
+    }
+}

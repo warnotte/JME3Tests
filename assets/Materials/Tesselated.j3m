@@ -1,0 +1,11 @@
+Material My Material : Common/MatDefs/Light/Lighting.j3md {
+     MaterialParameters {
+        UseMaterialColors : false
+        VertexLighting : false
+        UseVertexColor : false
+        SteepParallax : false
+        PackedNormalParallax : false
+     }
+    AdditionalRenderState {
+    }
+}
