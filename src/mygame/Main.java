@@ -18,13 +18,17 @@ import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
+import com.jme3.post.filters.BloomFilter;
 import com.jme3.post.filters.LightScatteringFilter;
+import com.jme3.post.ssao.SSAOFilter;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 import com.jme3.shadow.DirectionalLightShadowFilter;
+import com.jme3.texture.Texture2D;
+import com.jme3.water.WaterFilter;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -48,6 +52,7 @@ public class Main extends SimpleApplication {
     private boolean	Raytrace;
     
     DirectionalLight    sun;
+    private WaterFilter water;
 
     @Override
     public void simpleInitApp() {
@@ -133,6 +138,30 @@ public class Main extends SimpleApplication {
         inputManager.addListener(actionListener, "Shoot");
         inputManager.addMapping("Raytrace", new KeyTrigger(KeyInput.KEY_R));
 	inputManager.addListener(actionListener, "Raytrace");
+        
+        
+        
+        SSAOFilter ssaoFilter = new SSAOFilter();
+        //SSAOFilter ssaoFilter = new SSAOFilter(12.94f, 43.92f, 0.33f, 0.61f);
+        fpp.addFilter(ssaoFilter);
+        viewPort.addProcessor(fpp);
+        
+        /*
+        BloomFilter bloom=new BloomFilter();
+        fpp.addFilter(bloom);
+        viewPort.addProcessor(fpp);
+        */
+        
+        
+        water = new WaterFilter(rootNode, sun.getDirection());
+        
+        water.setWaterHeight(-4.0f);
+        water.setUseFoam(true);
+        water.setFoamTexture((Texture2D)assetManager.loadTexture("Common/MatDefs/Water/Textures/foam.jpg"));
+         
+        fpp.addFilter(water);
+
+        viewPort.addProcessor(fpp);
 
     }
 
@@ -165,7 +194,7 @@ public class Main extends SimpleApplication {
                         System.err.println("Dst : " + dist);
                         System.err.println("XYZ : " + pt);
 
-                        pt.y += 0.25f;
+                        pt.y += 0.25f+0.01f;
 
                         //addBox(pt);
                         makeBrick(pt);
