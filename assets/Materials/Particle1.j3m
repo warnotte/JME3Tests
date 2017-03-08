@@ -1,6 +1,6 @@
 Material ParticleMat1 : Common/MatDefs/Misc/Particle.j3md {
      MaterialParameters {
-        Texture : Textures/Particles/Whitepuff/whitePuff08.png
+        Texture : Textures/Effects/Explosion/flame.png
         PointSprite : true
 
      }
