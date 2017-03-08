@@ -76,10 +76,21 @@ public class Main extends SimpleApplication {
     
     Map<ParticleEmitter, Long> list_pe = new HashMap<>();
     
+    BitmapText helloText;
+    
     @Override
     public void simpleInitApp() {
         // For new versions thereafter
-
+ 
+        /** Write text on the screen (HUD) */
+        guiNode.detachAllChildren();
+        guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
+        helloText = new BitmapText(guiFont, false);
+        helloText.setSize(guiFont.getCharSet().getRenderedSize());
+        helloText.setText("Hello World");
+        helloText.setLocalTranslation(300, helloText.getLineHeight(), 0);
+        guiNode.attachChild(helloText);
+        
         initCrossHairs();
         flyCam.setEnabled(true);
         
@@ -120,12 +131,11 @@ public class Main extends SimpleApplication {
         fire = (ParticleEmitter) rootNode.getChild("Emitter");
         fire.scale(0.1f);
         
-      //  rootNode.attachChild(debris);
-      //  System.err.println("TOTO");
-        
         //TODO : Rename Collision listener...
         new MyCustomControl();
         
+       
+         
     }
     
     
@@ -137,19 +147,14 @@ public class Main extends SimpleApplication {
             }
             
             if (name.equals("CreateCube") && !keyPressed) {
-                
                 action_createCube();
-                
             }
             
-            if (name.equals("CreateWall") && !keyPressed) {
-                
-                action_createWall();
-                
+            if (name.equals("CreateWall") && !keyPressed) {       
+                action_createWall();             
             }
             
             if (name.equals("Shoot") && !keyPressed) {
-                
                 action_shoot();
             }
         }
@@ -160,7 +165,7 @@ public class Main extends SimpleApplication {
     public void simpleUpdate(float tpf) {
         super.simpleUpdate(tpf);
         
- //     System.err.println("Nbr PE : "+list_pe.size());
+        // Explosion particle remover
         Iterator it = list_pe.entrySet().iterator();
         int i = 0;
         while (it.hasNext()) {
@@ -169,7 +174,6 @@ public class Main extends SimpleApplication {
             long creationtime = entry.getValue();
             long currenttime = System.currentTimeMillis();
             float elapseinms = (float)(currenttime-creationtime)/1000.f;
- //           System.err.println("Pe :"+i+" got "+ elapseinms);
             if (elapseinms > 1.5)
             {
                 rootNode.detachChild(next);
@@ -180,7 +184,7 @@ public class Main extends SimpleApplication {
         }
       
         
-        
+        helloText.setText("Hello World : "+System.currentTimeMillis());
         
         if (Raytrace == true) {
             tracer = new RayTracePathTracer(rootNode, cam, 180, 180);
@@ -224,7 +228,7 @@ public class Main extends SimpleApplication {
      * A plus sign used as crosshairs to help the player with aiming.
      */
     protected void initCrossHairs() {
-        guiNode.detachAllChildren();
+        //guiNode.detachAllChildren();
         guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
         BitmapText ch = new BitmapText(guiFont, false);
         ch.setSize(guiFont.getCharSet().getRenderedSize() * 2);
@@ -532,11 +536,15 @@ public class Main extends SimpleApplication {
                 Vector3f pos = target.getLocalTranslation().clone();
      //           System.err.println("CBALL " + cball);
       //          System.err.println("TARGET " + target);
-                System.err.println("Pos " + pos);
+                //System.err.println("Pos " + pos);
                 
              //   pos = new Vector3f(0,4,0);
                 
-                addDebris(pos);
+                Vector3f lvel = rb.getLinearVelocity();
+                float velomax = Math.max(lvel.z, Math.max(lvel.x, lvel.y));
+                System.err.println("Velo "+velomax);
+                if (velomax > 0.75)
+                  addDebris(pos);
                 
                 
              
