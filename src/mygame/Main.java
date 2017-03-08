@@ -114,12 +114,11 @@ public class Main extends SimpleApplication {
         
         initLights();
         initFilters();
-        initWall();
+        
+        initWall(new Vector3f(0,0,0));
         
         fire = (ParticleEmitter) rootNode.getChild("Emitter");
         fire.scale(0.1f);
-        
-        
         
       //  rootNode.attachChild(debris);
       //  System.err.println("TOTO");
@@ -143,12 +142,18 @@ public class Main extends SimpleApplication {
                 
             }
             
+            if (name.equals("CreateWall") && !keyPressed) {
+                
+                action_createWall();
+                
+            }
+            
             if (name.equals("Shoot") && !keyPressed) {
                 
                 action_shoot();
             }
         }
-        
+       
     };
     
     @Override
@@ -196,12 +201,17 @@ public class Main extends SimpleApplication {
     
     private void initKeys() {
         inputManager.addMapping("CreateCube",
-                new KeyTrigger(KeyInput.KEY_RCONTROL),
+                new KeyTrigger(KeyInput.KEY_1),
                 new MouseButtonTrigger(0));        
         inputManager.addListener(actionListener, "CreateCube");
         
+        inputManager.addMapping("CreateWall",
+                new KeyTrigger(KeyInput.KEY_2),
+                new MouseButtonTrigger(2));        
+        inputManager.addListener(actionListener, "CreateWall");
+        
         inputManager.addMapping("Shoot",
-                new KeyTrigger(KeyInput.KEY_SPACE),
+                new KeyTrigger(KeyInput.KEY_3),
                 new MouseButtonTrigger(1));        
         inputManager.addListener(actionListener, "Shoot");
         
@@ -271,6 +281,38 @@ public class Main extends SimpleApplication {
     
     private float getRnd(float d) {
         return (float) (Math.random() - 0.5) * d;
+    }
+    
+    
+    private void action_createWall() {
+        
+        //Vector3f origin    = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.0f);
+        // 1. Reset results list.
+        CollisionResults results = new CollisionResults();
+        // 2. Aim the ray from cam loc to cam direction.
+
+        Ray ray = new Ray(cam.getLocation(), cam.getDirection());
+        // 3. Collect intersections between Ray and Shootables in results list.
+        rootNode.collideWith(ray, results);
+        //         loadedNode.collideWith(ray, results);
+        if (results.size() != 0) {
+            float dist = results.getClosestCollision().getDistance();
+            Vector3f pt = results.getClosestCollision().getContactPoint();
+            int tri = results.getClosestCollision().getTriangleIndex();
+            //    Vector3f  norm = results.getCollision(i).getTriangle(new Triangle()).getNormal();
+            String hit = results.getClosestCollision().getGeometry().getName();
+            
+            System.err.println("Geometry name : " + hit);
+            System.err.println("Dst : " + dist);
+            System.err.println("XYZ : " + pt);
+            
+            // Orientation ??! : Faut ptet creer un node en fait pour pouvoir rotate facilement ?!
+            pt.y += 0.01f;
+
+            initWall(pt);
+        }
+        
+           
     }
     
     private void action_createCube() {
@@ -402,6 +444,7 @@ public class Main extends SimpleApplication {
          */
     }
     
+    
     float brickLength = 0.48f;
     float brickWidth = 0.24f;
     float brickHeight = 0.12f;
@@ -409,28 +452,30 @@ public class Main extends SimpleApplication {
     /**
      * This loop builds a wall out of individual bricks.
      */
-    public void initWall() {
+    public void initWall(Vector3f location) {
 
         /**
          * dimensions used for bricks and wall
          */
+        Node nodewall= new Node("NodeWall");
         float startpt = brickLength / 4;
         float height = 0;
         for (int j = 0; j < 15; j++) {
             for (int i = 0; i < 6; i++) {
-                Vector3f vt
-                        = new Vector3f(i * brickLength * 2 + startpt, brickHeight + height, 0);
-                makeBrickWall(vt);
+                Vector3f vt  = new Vector3f(i * brickLength * 2 + startpt, brickHeight + height, 0);
+                Geometry geom = makeBrickWall(vt.add(location));
+                nodewall.attachChild(geom);
             }
             startpt = -startpt;
             height += 2 * brickHeight;
         }
+        rootNode.attachChild(nodewall);
     }
 
     /**
      * This method creates one individual physical brick.
      */
-    public void makeBrickWall(Vector3f loc) {
+    public Geometry makeBrickWall(Vector3f loc) {
         
         Material wall_mat = new Material(assetManager, "Common/MatDefs/Misc/ShowNormals.j3md");
         /**
@@ -445,7 +490,7 @@ public class Main extends SimpleApplication {
         Geometry brick_geo = new Geometry("brick", box);
         brick_geo.setShadowMode(ShadowMode.CastAndReceive);
         brick_geo.setMaterial(wall_mat);
-        rootNode.attachChild(brick_geo);
+        
         /**
          * Position the brick geometry
          */
@@ -459,6 +504,8 @@ public class Main extends SimpleApplication {
          */
         brick_geo.addControl(brick_phy);
         bulletAppState.getPhysicsSpace().add(brick_phy);
+        return brick_geo;
+        
     }
     
     public class MyCustomControl extends RigidBodyControl
@@ -505,10 +552,7 @@ public class Main extends SimpleApplication {
         list_pe.put(pe, System.currentTimeMillis());
         pe.setInWorldSpace(false);
         pe.setLocalTranslation(position);
-        
         rootNode.attachChild(pe);
-
-        
     }
     
     
