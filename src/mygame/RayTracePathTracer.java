@@ -70,19 +70,19 @@ public class RayTracePathTracer {
     	
     	images = new BufferedImage[10];
    
-        try {
+       // try {
             //	images[0] = ImageIO.read(new File("data\\KAMEN.jpg"));
             //	images[1] = ImageIO.read(new File("data\\KAMEN-stup.jpg"));
             //	IBL = ImageIO.read(new File("D:\\Textures\\EnvMap\\HDR Maps\\Small\\spherical1_probe.jpg"));
             //IBL = ImageIO.read(new File("F:\\Wax\\EnvMap\\Theatre_Center\\Theatre-Center_8k_TMap.jpg"));
-            IBL = ImageIO.read(new File("F:\\Wax\\EnvMap\\Alexs_Apartment\\ENV.jpg"));
+            //IBL = ImageIO.read(new File("F:\\Wax\\EnvMap\\Alexs_Apartment\\ENV.jpg"));
             
             
             //	IBL = ImageIO.read(new File("D:\\Textures\\EnvMap\\HDR Maps\\Small\\Barce_Rooftop_C_8k.jpg"));
             //	IBL = ImageIO.read(new File("D:\\Textures\\EnvMap\\HDR Maps\\Small\\Alexs_Apartment\\Alexs_Apt_8k.jpg"));
-        } catch (IOException ex) {
-            Logger.getLogger(RayTracePathTracer.class.getName()).log(Level.SEVERE, null, ex);
-        }
+       // } catch (IOException ex) {
+       //     Logger.getLogger(RayTracePathTracer.class.getName()).log(Level.SEVERE, null, ex);
+       // }
     		
 		
 
