@@ -1,4 +1,3 @@
-
 package mygame;
 
 import com.jme3.app.SimpleApplication;
@@ -233,7 +232,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         helloText.setText("Hello World : "+System.currentTimeMillis());
         
         if (Raytrace == true) {
-            tracer = new RayTracePathTracer(rootNode, getCamera(), 64*4, 64*4);
+            tracer = new RayTracePathTracer(rootNode, getCamera(), 64*2, 64*2);
             //tracer = new RayTrace(rootNode, getCamera(), 480, 480);
             tracer.show();
             boolean toto = true;

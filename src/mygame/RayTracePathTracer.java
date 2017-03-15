@@ -205,8 +205,9 @@ public class RayTracePathTracer {
                 ooo(lightDir, w, h, wr, hr, rand, h*1/4, h*1/2);
                 ooo(lightDir, w, h, wr, hr, rand, h*1/2, h*3/4);
                 ooo(lightDir, w, h, wr, hr, rand, h*3/4, h*4/4);*/
-        		BufferToImage();
-        		label.repaint();
+        	BufferToImage();
+                     label.repaint();
+                        
         		
 
 
@@ -218,6 +219,8 @@ public class RayTracePathTracer {
 		
 		for (int y = from; y < to; y++)
 		{
+                    int step = y;
+                    System.err.printf("%d %%\r\n", step);
     		label.repaint();
     		int x = 0;
             for (x = 0; x < w; x++)
@@ -394,7 +397,7 @@ public class RayTracePathTracer {
 		    	
 		    	int real_sample=0;
 		    	
-		    	if (depth<=1)
+		    	if (depth<=2)
 		    		
 		    	// create new rays et rapelle cette fct. en faisant une moyenne ?
 		    	for (int i = 0; i < sample; i++)
@@ -532,7 +535,6 @@ public class RayTracePathTracer {
 									
 			    Vector2f tt2 = new Vector2f(s1,t1).subtract(new Vector2f(s0,t0)); //uv2-uv1;
 			    Vector2f tt1 = new Vector2f(s2,t2).subtract(new Vector2f(s0,t0)); //uv3-uv1;
-
 			    Vector2f newuv = new Vector2f(s0,t0).add( tt1.mult(uM) .add( tt2.mult(vM)));
 				
 				
