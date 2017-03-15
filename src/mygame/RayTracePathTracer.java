@@ -125,7 +125,7 @@ public class RayTracePathTracer {
             	if (B>max) max=B;
             }
 		}
-		float delta = max-min;
+		float delta = (max-min)/2.0f;
 		
 		System.err.println("Accum = "+accum);
 		System.err.println("Min = "+min);
@@ -136,7 +136,8 @@ public class RayTracePathTracer {
                	float R = (imagePIXELS[x][y].x-min)/(float)delta;
             	float G = (imagePIXELS[x][y].y-min)/(float)delta;
             	float B = (imagePIXELS[x][y].z-min)/(float)delta;
-      
+               	
+     
             	//R/=accum;
             	//G/=accum;
             	//B/=accum;
@@ -152,9 +153,9 @@ public class RayTracePathTracer {
             	if (B<0.0f) B=0;
 				
             	 int Color =
-                    		((int)(R*255f*2)<<16)+
-                    		((int)(G*255f*2)<<8)+
-                    		((int)(B*255f*2));
+                    		((int)(R*255f)<<16)+
+                    		((int)(G*255f)<<8)+
+                    		((int)(B*255f));
             	        	image2.setRGB(x, height - y - 1, Color);
             }
 		}
@@ -198,10 +199,7 @@ public class RayTracePathTracer {
         int to = h; 
         
         // cannot be multithread it seems :( 
-        Thread t1 = new Thread()
-        {
-        	public void run()
-        	{
+
         		ooo(lightDir, w, h, wr, hr, rand, h*0/4, h*4/4);
         		/*ooo(lightDir, w, h, wr, hr, rand, h*0/4, h*1/4);
                 ooo(lightDir, w, h, wr, hr, rand, h*1/4, h*1/2);
@@ -210,21 +208,10 @@ public class RayTracePathTracer {
         		BufferToImage();
         		label.repaint();
         		
-        	}
-        };
+
 
         
-        t1.start();
-      
-        try {
-        	t1.join();
-        	accum++;
-      } catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        
-        }
+    }
 
 	
 	private void ooo(Vector3f lightDir, int w, int h, float wr, float hr, Random rand, int from, int to) {
@@ -236,17 +223,17 @@ public class RayTracePathTracer {
             for (x = 0; x < w; x++)
             {
             	image.setRGB(x, h - y - 1, 0);
-            	int val = rand.nextInt(5);
+            	/*int val = rand.nextInt(5);
             	if (val!=2)
             	{
             		continue;
-            	}
+            	}*/
             	Vector3f AccColor = new Vector3f(0,0,0);
             	float fragmentx = x;
             	float fragmenty = y;
             	//System.err.println("PrintX == "+x);
-        //	for( fragmentx = x; fragmentx < x + 1.0f; fragmentx += 0.25f)
-          //	   for( fragmenty = y; fragmenty < y + 1.0f; fragmenty += 0.25f)
+        	//for( fragmentx = x; fragmentx < x + 1.0f; fragmentx += 0.25f)
+          	//   for( fragmenty = y; fragmenty < y + 1.0f; fragmenty += 0.25f)
             		   {
             		   
             		   
@@ -256,7 +243,7 @@ public class RayTracePathTracer {
                 dir.subtractLocal(pos).normalizeLocal();
 
                 
-                Vector3f finalCol=computeCol( lightDir, rand, pos, dir, false, true, true, false, 0);
+                Vector3f finalCol=computeCol( lightDir, rand, pos, dir, false, false, true, true, 0);
 				
 			//	finalCol=finalCol.mult(2);
 				
@@ -283,9 +270,9 @@ public class RayTracePathTracer {
             		   imagePIXELS[x][y].z+=AccColor.z;
             		   
             		   int Color =
-                          		((int)(AccColor.x*200f)<<16)+
-                          		((int)(AccColor.y*200f)<<8)+
-                          		((int)(AccColor.z*200f));
+                          		((int)(AccColor.x*1.0f)<<16)+
+                          		((int)(AccColor.y*1.0f)<<8)+
+                          		((int)(AccColor.z*1.0f));
             		   image.setRGB(x, h - y - 1, Color);
                              //  label.repaint();
                   
@@ -377,7 +364,7 @@ public class RayTracePathTracer {
 			//Vector3f shadowdir = lightDir.clone().negate();//.subtractLocal(pos).normalizeLocal(); 
 			//pos.addLocal(shadowdir.clone().divide(100)); // Pour eviter certains kist (faudrait donner une objet a eviter a trace peut etre).
 		    
-			int sample = 1;
+			int sample = 6;
 			
 			
 			if ((geom.getName()!=null) && (geom.getName().contains("Light")))
@@ -407,7 +394,7 @@ public class RayTracePathTracer {
 		    	
 		    	int real_sample=0;
 		    	
-		    	if (depth<=2)
+		    	if (depth<=1)
 		    		
 		    	// create new rays et rapelle cette fct. en faisant une moyenne ?
 		    	for (int i = 0; i < sample; i++)
@@ -424,9 +411,9 @@ public class RayTracePathTracer {
 		    		
 		    		Vector3f col = computeCol(null, rand, pos2, newdir, false, false, false, false, depth+1);
 		    		
-		    		rr += col.x;
-		    		gg += col.y;
-		    		bb += col.z;
+		    		rr += col.x*64;
+		    		gg += col.y*64;
+		    		bb += col.z*64;
 		    		real_sample++;
 		    		}
 				}

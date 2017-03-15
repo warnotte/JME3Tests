@@ -49,9 +49,9 @@ public class RayTrace {
     	image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     	
     	images = new BufferedImage[10];
-    	try {
-    		images[0] = ImageIO.read(new File("data\\KAMEN.jpg"));
-    		images[1] = ImageIO.read(new File("data\\KAMEN-stup.jpg"));
+    /*	try {
+    	//	images[0] = ImageIO.read(new File("data\\KAMEN.jpg"));
+    	//	images[1] = ImageIO.read(new File("data\\KAMEN-stup.jpg"));
     	//	images[2] = ImageIO.read(new File("data\\KAMEN_normal.png"));
     	//	images[3] = ImageIO.read(new File("data\\KAMEN_STUP_normal.png"));
     	//	IBL = ImageIO.read(new File("D:\\Textures\\EnvMap\\HDR Maps\\Small\\spherical1_probe.jpg"));
@@ -61,7 +61,7 @@ public class RayTrace {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 
         this.scene = scene;
         this.cam = cam;
