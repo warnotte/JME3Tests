@@ -1,6 +1,7 @@
 package mygame;
 
 import com.jme3.app.SimpleApplication;
+import com.jme3.asset.plugins.FileLocator;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.collision.PhysicsCollisionEvent;
 import com.jme3.bullet.collision.PhysicsCollisionListener;
@@ -9,6 +10,7 @@ import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.collision.CollisionResults;
 import com.jme3.effect.ParticleEmitter;
 import com.jme3.effect.ParticleMesh;
+import com.jme3.export.binary.BinaryExporter;
 import com.jme3.export.binary.BinaryImporter;
 import com.jme3.font.BitmapText;
 import com.jme3.input.KeyInput;
@@ -30,20 +32,18 @@ import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
-import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
 import com.jme3.scene.shape.Sphere.TextureMode;
 import com.jme3.shadow.DirectionalLightShadowFilter;
 import com.jme3.texture.Texture2D;
 import com.jme3.water.WaterFilter;
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.swing.Timer;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -51,7 +51,7 @@ import javax.swing.Timer;
  *
  * @author normenhansen
  */
-public class Main extends SimpleApplication {
+public class Main extends SimpleApplication implements PhysicsCollisionListener {
     
     public static void main(String[] args) {
         Main app = new Main();
@@ -78,6 +78,10 @@ public class Main extends SimpleApplication {
     
     BitmapText helloText;
     
+    int paused = 0;
+    
+    //Node world;
+    
     @Override
     public void simpleInitApp() {
         // For new versions thereafter
@@ -90,6 +94,7 @@ public class Main extends SimpleApplication {
         helloText.setText("Hello World");
         helloText.setLocalTranslation(300, helloText.getLineHeight(), 0);
         guiNode.attachChild(helloText);
+        
         
         initCrossHairs();
         flyCam.setEnabled(true);
@@ -125,17 +130,13 @@ public class Main extends SimpleApplication {
         
         initLights();
         initFilters();
-        
         initWall(new Vector3f(0,0,0));
         
         fire = (ParticleEmitter) rootNode.getChild("Emitter");
         fire.scale(0.1f);
         
         //TODO : Rename Collision listener...
-        new MyCustomControl();
-        
-       
-         
+        bulletAppState.getPhysicsSpace().addCollisionListener(this);
     }
     
     
@@ -157,10 +158,50 @@ public class Main extends SimpleApplication {
             if (name.equals("Shoot") && !keyPressed) {
                 action_shoot();
             }
+            
+            if (name.equals("Pause") && !keyPressed) {
+                action_pause();
+            }
+            
+            if (name.equals("Save") && !keyPressed) {
+                action_save();
+            }
+            if (name.equals("Load") && !keyPressed) {
+                action_load();
+            }
+            
         }
+
+       
+        
+
+        
        
     };
     
+     private void action_save() {
+            String userHome = System.getProperty("user.home");
+            BinaryExporter exporter = BinaryExporter.getInstance();
+            File file = new File(userHome+"\\MyModel.j3o");
+            try {
+              exporter.save(rootNode, file);
+              System.err.println("save to : "+file);
+                      
+            } catch (IOException ex) {
+              //Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Error: Failed to save game!", ex);
+              ex.printStackTrace();
+            }
+        }
+        
+        private void action_load() {
+            String userHome = System.getProperty("user.home");
+            assetManager.registerLocator(userHome, FileLocator.class);
+            Node loadedNode = (Node)assetManager.loadModel("MyModel.j3o");
+            loadedNode.setName("loaded node");
+            rootNode.detachAllChildren();
+            rootNode.attachChild(loadedNode);
+        }
+        
     @Override
     public void simpleUpdate(float tpf) {
         super.simpleUpdate(tpf);
@@ -182,8 +223,7 @@ public class Main extends SimpleApplication {
             }
             i++;
         }
-      
-        
+       
         helloText.setText("Hello World : "+System.currentTimeMillis());
         
         if (Raytrace == true) {
@@ -221,6 +261,15 @@ public class Main extends SimpleApplication {
         
         inputManager.addMapping("Raytrace", new KeyTrigger(KeyInput.KEY_R));
         inputManager.addListener(actionListener, "Raytrace");
+        
+        inputManager.addMapping("Pause", new KeyTrigger(KeyInput.KEY_P));
+        inputManager.addListener(actionListener, "Pause");
+        inputManager.addMapping("Save", new KeyTrigger(KeyInput.KEY_NUMPAD2));
+        inputManager.addListener(actionListener, "Save");
+        inputManager.addMapping("Load", new KeyTrigger(KeyInput.KEY_NUMPAD1));
+        inputManager.addListener(actionListener, "Load");
+        
+        
         
     }
 
@@ -340,58 +389,18 @@ public class Main extends SimpleApplication {
             System.err.println("Dst : " + dist);
             System.err.println("XYZ : " + pt);
             
-            pt.y += 0.25f + 0.01f;
-
-            //addBox(pt);
-            makeBrick(pt);
+            float sx, sy, sz;
+            float maxDev = 0.5f;
+            sx = 0.25f + getRnd(maxDev);
+            sy = 0.25f + getRnd(maxDev);
+            sz = 0.25f + getRnd(maxDev);
+            
+            pt.y += sy;
+            
+            makeBrick(pt, sx, sy, sz);
         }
     }
 
-    /**
-     * This method creates one individual physical brick.
-     */
-    public void makeBrick(Vector3f loc) {
-        float maxDev = 0.5f;
-        Box b = new Box(0.25f + getRnd(maxDev), 0.25f + getRnd(maxDev), 0.25f + getRnd(maxDev));
-
-        /**
-         * Create a brick geometry and attach to scene graph.
-         */
-        Geometry brick_geo = new Geometry("brick", b);
-        brick_geo.setShadowMode(ShadowMode.CastAndReceive);
-        Material matN = new Material(assetManager, "Common/MatDefs/Misc/ShowNormals.j3md");
-        
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setColor("Color", ColorRGBA.Blue);
-        brick_geo.setLocalTranslation(loc);
-        brick_geo.setMaterial(matN);
-        rootNode.attachChild(brick_geo);
-        /**
-         * Position the brick geometry
-         */
-
-        /**
-         * Make brick physical with a mass > 0.0f.
-         */
-        RigidBodyControl brick_phy = new RigidBodyControl(0.5f);
-        /**
-         * Add physical brick to physics space.
-         */
-        brick_geo.addControl(brick_phy);
-        brick_phy.setPhysicsLocation(loc);
-        bulletAppState.getPhysicsSpace().add(brick_phy);
-    }
-    
-    private void addBox(Vector3f pt) {
-        Box b = new Box(0.25f, 0.25f, 0.25f);
-        Geometry geom = new Geometry("Box", b);
-        geom.setLocalTranslation(pt);
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setColor("Color", ColorRGBA.Blue);
-        geom.setMaterial(mat);
-        rootNode.attachChild(geom);
-    }
-    
     private void action_shoot() {
         /**
          * This method creates one individual physical cannon ball. By defaul,
@@ -448,6 +457,35 @@ public class Main extends SimpleApplication {
          */
     }
     
+    
+    private void action_pause() {
+        switch(paused)
+        {
+            case 0:
+                paused=1;
+                bulletAppState.setEnabled(true);
+                bulletAppState.setSpeed(0.25f);
+                bulletAppState.getPhysicsSpace().setMaxSubSteps(16);
+                break;
+            case 1:
+                paused=2;
+                bulletAppState.setEnabled(false);
+                break;
+            case 2:
+                paused=3;
+                bulletAppState.setEnabled(true);
+                bulletAppState.setSpeed(0.25f);
+                bulletAppState.getPhysicsSpace().setMaxSubSteps(16);
+                break;
+            case 3:
+                paused=0;
+                bulletAppState.setEnabled(true);
+                bulletAppState.setSpeed(1.0f);
+                bulletAppState.getPhysicsSpace().setMaxSubSteps(4);
+                break;
+        }
+        
+    }
     
     float brickLength = 0.48f;
     float brickWidth = 0.24f;
@@ -512,47 +550,51 @@ public class Main extends SimpleApplication {
         
     }
     
-    public class MyCustomControl extends RigidBodyControl
-            implements PhysicsCollisionListener {
-
-        public MyCustomControl() {
-            bulletAppState.getPhysicsSpace().addCollisionListener(this);
-            
-        }
+        /**
+     * This method creates one individual physical brick.
+     */
+    public void makeBrick(Vector3f loc, float sx, float sy, float sz) {
         
-        @Override
-        public void collision(PhysicsCollisionEvent event) {
-            if ((event.getNodeA().getName().equalsIgnoreCase("cannon ball"))
-                    || (event.getNodeB().getName().equalsIgnoreCase("cannon ball"))) {
-                Geometry target = (Geometry) event.getNodeB();
-                Geometry cball = (Geometry) event.getNodeA();
-                if (event.getNodeB().getName().equalsIgnoreCase("cannon ball")) {
-                    target = (Geometry) event.getNodeA();
-                    cball = (Geometry) event.getNodeB();
-                }
-                if (target.getName().equalsIgnoreCase("Box")) return;
-                RigidBodyControl rb = cball.getControl(RigidBodyControl.class);
-                
-                Vector3f pos = target.getLocalTranslation().clone();
-     //           System.err.println("CBALL " + cball);
-      //          System.err.println("TARGET " + target);
-                //System.err.println("Pos " + pos);
-                
-             //   pos = new Vector3f(0,4,0);
-                
-                Vector3f lvel = rb.getLinearVelocity();
-                float velomax = Math.max(lvel.z, Math.max(lvel.x, lvel.y));
-                System.err.println("Velo "+velomax);
-                if (velomax > 0.75)
-                  addDebris(pos);
-                
-                
-             
-                
-            }
-        }
+        Box b = new Box(sx, sy, sz);
+
+        /**
+         * Create a brick geometry and attach to scene graph.
+         */
+        Geometry brick_geo = new Geometry("brick", b);
+        brick_geo.setShadowMode(ShadowMode.CastAndReceive);
+        Material matN = new Material(assetManager, "Common/MatDefs/Misc/ShowNormals.j3md");
+        
+        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat.setColor("Color", ColorRGBA.Blue);
+        brick_geo.setLocalTranslation(loc);
+        brick_geo.setMaterial(matN);
+        rootNode.attachChild(brick_geo);
+        /**
+         * Position the brick geometry
+         */
+
+        /**
+         * Make brick physical with a mass > 0.0f.
+         */
+        RigidBodyControl brick_phy = new RigidBodyControl(0.5f);
+        /**
+         * Add physical brick to physics space.
+         */
+        brick_geo.addControl(brick_phy);
+        brick_phy.setPhysicsLocation(loc);
+        bulletAppState.getPhysicsSpace().add(brick_phy);
     }
     
+    private void addBox(Vector3f pt) {
+        Box b = new Box(0.25f, 0.25f, 0.25f);
+        Geometry geom = new Geometry("Box", b);
+        geom.setLocalTranslation(pt);
+        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat.setColor("Color", ColorRGBA.Blue);
+        geom.setMaterial(mat);
+        rootNode.attachChild(geom);
+    }
+       
     
     public void addDebris(Vector3f position)
     {
@@ -587,4 +629,25 @@ public class Main extends SimpleApplication {
         return debris;
     
     }
+    
+    @Override
+        public void collision(PhysicsCollisionEvent event) {
+            if ((event.getNodeA().getName().equalsIgnoreCase("cannon ball"))
+                    || (event.getNodeB().getName().equalsIgnoreCase("cannon ball"))) {
+                Geometry target = (Geometry) event.getNodeB();
+                Geometry cball = (Geometry) event.getNodeA();
+                if (event.getNodeB().getName().equalsIgnoreCase("cannon ball")) {
+                    target = (Geometry) event.getNodeA();
+                    cball = (Geometry) event.getNodeB();
+                }
+                if (target.getName().equalsIgnoreCase("Box")) return;
+                RigidBodyControl rb = cball.getControl(RigidBodyControl.class);
+                Vector3f pos = target.getLocalTranslation().clone();
+                Vector3f lvel = rb.getLinearVelocity();
+                float velomax = Math.max(lvel.z, Math.max(lvel.x, lvel.y));
+                System.err.println("Velo "+velomax);
+                if (velomax > 0.75)
+                  addDebris(pos);
+            }
+        }
 }
