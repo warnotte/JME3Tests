@@ -1,3 +1,4 @@
+
 package mygame;
 
 import com.jme3.app.SimpleApplication;
@@ -14,8 +15,10 @@ import com.jme3.export.binary.BinaryExporter;
 import com.jme3.export.binary.BinaryImporter;
 import com.jme3.font.BitmapText;
 import com.jme3.input.KeyInput;
+import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
@@ -63,6 +66,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
     Node loadedNode = null;
     
     RayTracePathTracer tracer = null;
+    //RayTrace tracer = null;
     
     private boolean Raytrace;
     
@@ -80,7 +84,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
     
     int paused = 0;
     
-    //Node world;
+    Node world;
     
     @Override
     public void simpleInitApp() {
@@ -117,7 +121,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         loadedNode.setName("loaded node");
         Geometry sph = (Geometry) loadedNode.getChild("Box");
         ((Geometry) sph).getMesh().scaleTextureCoordinates(new Vector2f(8, 8));
-        rootNode.attachChild(loadedNode);
+        world=loadedNode;
 
         /* Make the floor physical with mass 0.0f! */
         RigidBodyControl floor_phy = new RigidBodyControl(0.0f);
@@ -132,11 +136,13 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         initFilters();
         initWall(new Vector3f(0,0,0));
         
-        fire = (ParticleEmitter) rootNode.getChild("Emitter");
+        fire = (ParticleEmitter) world.getChild("Emitter");
         fire.scale(0.1f);
         
         //TODO : Rename Collision listener...
         bulletAppState.getPhysicsSpace().addCollisionListener(this);
+        
+        rootNode.attachChild(world);
     }
     
     
@@ -184,9 +190,8 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
             BinaryExporter exporter = BinaryExporter.getInstance();
             File file = new File(userHome+"\\MyModel.j3o");
             try {
-              exporter.save(rootNode, file);
+              exporter.save(world, file);
               System.err.println("save to : "+file);
-                      
             } catch (IOException ex) {
               //Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Error: Failed to save game!", ex);
               ex.printStackTrace();
@@ -198,8 +203,9 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
             assetManager.registerLocator(userHome, FileLocator.class);
             Node loadedNode = (Node)assetManager.loadModel("MyModel.j3o");
             loadedNode.setName("loaded node");
-            rootNode.detachAllChildren();
-            rootNode.attachChild(loadedNode);
+            rootNode.detachChild(world);
+            world=loadedNode;
+            rootNode.attachChild(world);
         }
         
     @Override
@@ -217,7 +223,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
             float elapseinms = (float)(currenttime-creationtime)/1000.f;
             if (elapseinms > 1.5)
             {
-                rootNode.detachChild(next);
+                world.detachChild(next);
                 next.killAllParticles();
                 it.remove();
             }
@@ -227,7 +233,8 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         helloText.setText("Hello World : "+System.currentTimeMillis());
         
         if (Raytrace == true) {
-            tracer = new RayTracePathTracer(rootNode, cam, 180, 180);
+            tracer = new RayTracePathTracer(rootNode, getCamera(), 64*4, 64*4);
+            //tracer = new RayTrace(rootNode, getCamera(), 480, 480);
             tracer.show();
             boolean toto = true;
             while (toto) {
@@ -244,6 +251,8 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
     }
     
     private void initKeys() {
+        
+        
         inputManager.addMapping("CreateCube",
                 new KeyTrigger(KeyInput.KEY_1),
                 new MouseButtonTrigger(0));        
@@ -268,6 +277,9 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         inputManager.addListener(actionListener, "Save");
         inputManager.addMapping("Load", new KeyTrigger(KeyInput.KEY_NUMPAD1));
         inputManager.addListener(actionListener, "Load");
+        
+                
+        
         
         
         
@@ -346,7 +358,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
 
         Ray ray = new Ray(cam.getLocation(), cam.getDirection());
         // 3. Collect intersections between Ray and Shootables in results list.
-        rootNode.collideWith(ray, results);
+        world.collideWith(ray, results);
         //         loadedNode.collideWith(ray, results);
         if (results.size() != 0) {
             float dist = results.getClosestCollision().getDistance();
@@ -376,7 +388,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
 
         Ray ray = new Ray(cam.getLocation(), cam.getDirection());
         // 3. Collect intersections between Ray and Shootables in results list.
-        rootNode.collideWith(ray, results);
+        world.collideWith(ray, results);
         //         loadedNode.collideWith(ray, results);
         if (results.size() != 0) {
             float dist = results.getClosestCollision().getDistance();
@@ -417,10 +429,10 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         /**
          * Create a cannon ball geometry and attach to scene graph.
          */
-        Geometry ball_geo = new Geometry("cannon ball", ball);
+        Geometry ball_geo = new Geometry("cannonballLight", ball);
         ball_geo.setShadowMode(ShadowMode.CastAndReceive);
         ball_geo.setMaterial(ball_mat);
-        rootNode.attachChild(ball_geo);
+        world.attachChild(ball_geo);
         /**
          * Position the cannon ball
          */
@@ -453,7 +465,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         fire.setLocalTranslation(cam.getLocation());
         fire.scale(0.5f);
         
-        rootNode.attachChild(fire);
+        world.attachChild(fire);
          */
     }
     
@@ -464,7 +476,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
             case 0:
                 paused=1;
                 bulletAppState.setEnabled(true);
-                bulletAppState.setSpeed(0.25f);
+                bulletAppState.setSpeed(0.0625f);
                 bulletAppState.getPhysicsSpace().setMaxSubSteps(16);
                 break;
             case 1:
@@ -474,7 +486,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
             case 2:
                 paused=3;
                 bulletAppState.setEnabled(true);
-                bulletAppState.setSpeed(0.25f);
+                bulletAppState.setSpeed(0.0625f);
                 bulletAppState.getPhysicsSpace().setMaxSubSteps(16);
                 break;
             case 3:
@@ -511,7 +523,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
             startpt = -startpt;
             height += 2 * brickHeight;
         }
-        rootNode.attachChild(nodewall);
+        world.attachChild(nodewall);
     }
 
     /**
@@ -568,7 +580,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         mat.setColor("Color", ColorRGBA.Blue);
         brick_geo.setLocalTranslation(loc);
         brick_geo.setMaterial(matN);
-        rootNode.attachChild(brick_geo);
+        world.attachChild(brick_geo);
         /**
          * Position the brick geometry
          */
@@ -592,7 +604,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         mat.setColor("Color", ColorRGBA.Blue);
         geom.setMaterial(mat);
-        rootNode.attachChild(geom);
+        world.attachChild(geom);
     }
        
     
@@ -602,7 +614,7 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
         list_pe.put(pe, System.currentTimeMillis());
         pe.setInWorldSpace(false);
         pe.setLocalTranslation(position);
-        rootNode.attachChild(pe);
+        world.attachChild(pe);
     }
     
     
@@ -631,23 +643,23 @@ public class Main extends SimpleApplication implements PhysicsCollisionListener 
     }
     
     @Override
-        public void collision(PhysicsCollisionEvent event) {
-            if ((event.getNodeA().getName().equalsIgnoreCase("cannon ball"))
-                    || (event.getNodeB().getName().equalsIgnoreCase("cannon ball"))) {
-                Geometry target = (Geometry) event.getNodeB();
-                Geometry cball = (Geometry) event.getNodeA();
-                if (event.getNodeB().getName().equalsIgnoreCase("cannon ball")) {
-                    target = (Geometry) event.getNodeA();
-                    cball = (Geometry) event.getNodeB();
-                }
-                if (target.getName().equalsIgnoreCase("Box")) return;
-                RigidBodyControl rb = cball.getControl(RigidBodyControl.class);
-                Vector3f pos = target.getLocalTranslation().clone();
-                Vector3f lvel = rb.getLinearVelocity();
-                float velomax = Math.max(lvel.z, Math.max(lvel.x, lvel.y));
-                System.err.println("Velo "+velomax);
-                if (velomax > 0.75)
-                  addDebris(pos);
+    public void collision(PhysicsCollisionEvent event) {
+        if ((event.getNodeA().getName().equalsIgnoreCase("cannonballLight"))
+                || (event.getNodeB().getName().equalsIgnoreCase("cannonballLight"))) {
+            Geometry target = (Geometry) event.getNodeB();
+            Geometry cball = (Geometry) event.getNodeA();
+            if (event.getNodeB().getName().equalsIgnoreCase("cannonballLight")) {
+                target = (Geometry) event.getNodeA();
+                cball = (Geometry) event.getNodeB();
             }
+            if (target.getName().equalsIgnoreCase("Box")) return;
+            RigidBodyControl rb = cball.getControl(RigidBodyControl.class);
+            Vector3f pos = target.getLocalTranslation().clone();
+            Vector3f lvel = rb.getLinearVelocity();
+            float velomax = Math.max(lvel.z, Math.max(lvel.x, lvel.y));
+            System.err.println("Velo "+velomax);
+            if (velomax > 0.75)
+              addDebris(pos);
         }
+    }
 }
